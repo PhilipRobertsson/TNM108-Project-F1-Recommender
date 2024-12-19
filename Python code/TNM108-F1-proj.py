@@ -167,10 +167,38 @@ def calcDriverClimb(raceDf):
     
     raceDf['podiumClimb'] = podiumClimb
     return raceDf
+def getDriverCosim(raceId,raceDf):
+  driverCosine = raceDf['driverCosim'].loc[raceId]
+  return driverCosine
+def getConstructorCosim(raceId,raceDf):
+  constructorCosine = raceDf['constrCosim'].loc[raceId]
+  return constructorCosine
+def getPodiumClimb(raceId,raceDf):
+  podiumClimb = raceDf['podiumClimb'].loc[raceId]
+  return podiumClimb
+def expandProfiles(profDf,raceDf):
+    profDf["racePodiumClimb"] = pd.Series(dtype='object',index=profDf.index) # Avoids error when assigning a list to a singular cell
+    for i in profDf.index:
+        profDf.loc[i,'raceDriverCosim'] = getDriverCosim(profDf.loc[i,'raceId'],raceDf)
+        profDf.loc[i,'raceConstrCosim'] = getConstructorCosim(profDf.loc[i,'raceId'],raceDf)
+        profDf.at[i,'racePodiumClimb'] = getPodiumClimb(profDf.loc[i,'raceId'],raceDf)
+    return profDf
+def getRaceByIndex(raceId,raceDf):
+  raceInfo = raceDf.loc[raceId]
+  raceInfo['circuitName'] = circuits.loc[raceInfo.circuitId,'name']
+  return raceInfo
+def getDriverByIndex(driverId):
+  driverInfo = drivers.loc[driverId]
+  return driverInfo
+def getConstructorByIndex(constructorId):
+  constructorInfo = constructors.loc[constructorId]
+  return constructorInfo
 
 # Main
-
 profDf = createProfiles(profiles) # Generate the profiles dataframe
 filtRaces = filterRaces()               # Filter races.cvs and add relevant information
 filtRaces = calcCosineSimularity(filtRaces)
 filtRaces = calcDriverClimb(filtRaces)
+profDf = expandProfiles(profDf, filtRaces)
+print(getRaceByIndex(456,filtRaces))
+
