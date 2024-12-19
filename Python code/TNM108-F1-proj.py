@@ -3,7 +3,9 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
-from array import array
+import matplotlib.pyplot as plt
+import math
+from sklearn.neighbors import KNeighborsClassifier
 
 #Datasets
 circuits = pd.read_csv('./F1Data/circuits.csv', index_col='circuitId')
@@ -47,7 +49,7 @@ profile4 = {
   'FavRace'  : 'Turkish Grand Prix 2020'
 }
 profile5 ={
-  'FavDriver': 'Valtteri Bottas',
+  'FavDriver': 'Al Pease',
   'FavConst' : 'Sauber',
   'FavCircuit' : 'Autódromo José Carlos Pace',
   'FavRace'  : 'Monaco Grand Prix 1996'
@@ -167,6 +169,142 @@ def calcDriverClimb(raceDf):
     
     raceDf['podiumClimb'] = podiumClimb
     return raceDf
+def calcEuclidianDist(profDf,raceDf):
+    profile_cosim = profDf[['raceDriverCosim', 'raceConstrCosim']]
+    filtered_cosim = raceDf[['driverCosim', 'constrCosim']]
+    euclidianRaces = raceDf
+
+    total_distance_vec = []
+    for race in filtered_cosim.iterrows():
+        total_distance = 0
+        for profile in profile_cosim.iterrows():
+            if not type(race[1].iloc[0]) == float: # checks if nan
+                x = race[1].iloc[0][0][0] - profile[1].iloc[0] #Driver cosim
+                y = race[1].iloc[1][0][0] - profile[1].iloc[1] #constr cosim
+                total_distance += math.sqrt(pow(x,2) + pow(y,2))
+        if(total_distance == 0):
+            total_distance = np.nan
+        total_distance_vec.append(total_distance/len(profDf))
+    euclidianRaces['TotalDistance'] = total_distance_vec
+    return euclidianRaces
+def calcEuclidianDistWeighted(profDf,raceDf):
+    profile_cosim = profDf[['raceDriverCosim', 'raceConstrCosim', 'driverId']]
+    filtered_cosim = raceDf[['driverCosim', 'constrCosim', 'podiumClimb', 'driversPosition']]
+    euclidianRacesW = raceDf
+
+    total_distance_vec = []
+    for race in filtered_cosim.iterrows():
+        total_distance = 0
+        for profile in profile_cosim.iterrows():
+            if not type(race[1].iloc[0]) == float: # checks if nan
+                x = race[1].iloc[0][0][0] - profile[1].iloc[0] #Driver cosim
+                y = race[1].iloc[1][0][0] - profile[1].iloc[1] #constr cosim
+
+                winnerWeight = race[1].iloc[2]
+
+                desiredDriver = profile[1].iloc[2] # wanted driver
+                driversPosition = race[1].iloc[3]
+                winningDrivers = driversPosition
+                z = 100
+                for index, driver in enumerate(winningDrivers):
+                    if driver == desiredDriver:
+                         if not type(winnerWeight[index]) == float:
+                            driverWeight = winnerWeight[index]
+                            z -= (driverWeight[1]+1) * 10/ (index+1)
+
+                total_distance += math.sqrt(pow(x,2) + pow(y,2) + pow(z,2))
+        if(total_distance == 0):
+            total_distance = np.nan
+        total_distance_vec.append(total_distance)
+    euclidianRacesW['TotalDistance'] = total_distance_vec
+    return euclidianRacesW
+def calcKNN(profDf, raceDf):
+    profile_cosim = profDf[['raceDriverCosim', 'raceConstrCosim', 'driverId']]
+    filtered_cosim = raceDf[['driverCosim', 'constrCosim', 'podiumClimb', 'driversPosition']]
+    knnRaces = raceDf
+    race_x = []
+    race_y = []
+    race_class = []
+    racesWithoutFloat = []
+
+    for race in filtered_cosim.iterrows():
+        z = 0
+        if not type(race[1].iloc[0]) == float:
+            racesWithoutFloat.append(race)
+            for profile in profile_cosim.iterrows():
+                if not type(race[1].iloc[0]) == float: # checks if nan
+                    winnerWeight = race[1].iloc[2]
+                    desiredDriver = profile[1].iloc[2] # wanted driver
+                    driversPosition = race[1].iloc[3]
+                    winningDrivers = driversPosition
+
+                    for index, driver in enumerate(winningDrivers):
+                        if driver == desiredDriver:
+                            if not type(winnerWeight[index]) == float:
+                                driverWeight = winnerWeight[index]
+                                z += abs(driverWeight[1]) * 10/ (index+1)
+        if z == 0:
+            race_x.append(0)
+            race_y.append(0)
+            race_class.append(0)
+            continue
+        race_x.append(race[1].iloc[0][0][0])
+        race_y.append(race[1].iloc[1][0][0])
+        if z >= 30:
+            race_class.append(3)
+            continue
+        if z >= 10:
+            race_class.append(2)
+            continue
+        if z < 10:
+            race_class.append(1)
+    
+    knnRaces['RaceClass'] = race_class
+
+    data = list(zip(race_x, race_y))
+    knn = KNeighborsClassifier(n_neighbors=5)
+    knn.fit(data, race_class)
+
+    average_x = 0
+    average_y = 0
+    for profile in profile_cosim.iterrows():
+        new_x = profile[1].iloc[0]
+        new_y = profile[1].iloc[1]
+        average_x += new_x
+        average_y += new_y
+    average_x /= (profile_cosim.size / 3)
+    average_y /= (profile_cosim.size / 3)
+    new_point = [(average_x, average_y)]
+    
+    prediction = knn.predict(new_point)
+    total_distance_vec = []
+    for index, race in enumerate(filtered_cosim.iterrows()):
+        if race_class[index] == prediction:
+            total_distance = 0
+
+            for profile in profile_cosim.iterrows():
+                if not type(race[1].iloc[0]) == float: # checks if nan
+                    x = race[1].iloc[0][0][0] - profile[1].iloc[0] #Driver cosim
+                    y = race[1].iloc[1][0][0] - profile[1].iloc[1] #constr cosim
+
+                    winnerWeight = race[1].iloc[2]
+                    desiredDriver = profile[1].iloc[2] # wanted driver
+
+                    z = 100
+                    for index, driver in enumerate(winningDrivers):
+                        if driver == desiredDriver:
+                            if not type(winnerWeight[index]) == float:
+                                driverWeight = winnerWeight[index]
+                                if index == 0:
+                                    z -= (driverWeight[1]+1) * 10
+                                else:
+                                    z -= (driverWeight[1]+1) * 10 / (index)
+                    total_distance += math.sqrt(pow(x,2) + pow(y,2) + pow(z,2))
+            total_distance_vec.append(total_distance)
+        else:
+            total_distance_vec.append(100000)            
+    knnRaces['TotalDistance'] = total_distance_vec
+    return knnRaces
 def getDriverCosim(raceId,raceDf):
   driverCosine = raceDf['driverCosim'].loc[raceId]
   return driverCosine
@@ -193,12 +331,49 @@ def getDriverByIndex(driverId):
 def getConstructorByIndex(constructorId):
   constructorInfo = constructors.loc[constructorId]
   return constructorInfo
+def drawScatterPlot(filtRaces):
+    plt.scatter(filtRaces['constrCosim'], filtRaces['driverCosim'],c=filtRaces.index, cmap='twilight_shifted')
+    plt.show()
+    return
 
-# Main
-profDf = createProfiles(profiles) # Generate the profiles dataframe
-filtRaces = filterRaces()               # Filter races.cvs and add relevant information
-filtRaces = calcCosineSimularity(filtRaces)
-filtRaces = calcDriverClimb(filtRaces)
-profDf = expandProfiles(profDf, filtRaces)
-print(getRaceByIndex(456,filtRaces))
 
+#------------------------------------Main-------------------------------------------------
+# Following function calls needs to be executed in order
+profDf = createProfiles(profiles)                     # Generate the profiles dataframe
+filtRaces = filterRaces()                                   # Filter races.cvs and add relevant information
+filtRaces = calcCosineSimularity(filtRaces)      # Calculate the cosine similarity for all races between qualifying and race result
+filtRaces = calcDriverClimb(filtRaces)              # Calculate the climb for all drivers in all races
+profDf = expandProfiles(profDf, filtRaces)      # Add cosine similarity and driver climb from the profiles favorite races
+
+#--------------------------------Diffrent predictions----------------------------------------
+# Diffrent predictions are made with diffrent algorithms.
+# Then the diffrent predictions are sorted and shortened to n entries, then printed to the console
+n = 5
+
+racesEuclidianDist = calcEuclidianDist(profDf,filtRaces)    # Calculate the mean euclidan distance to all races for the profiles, this is without weights
+racesEuclidianDist = racesEuclidianDist.sort_values(by='TotalDistance').head(n)
+
+print('Recomended races with unweighted euclidian distance: \n')
+print(racesEuclidianDist['name'] + " " + racesEuclidianDist['date'])
+print('With the distances: \n')
+print(racesEuclidianDist['TotalDistance'])
+
+print("\n")
+
+racesEuclidianDistW = calcEuclidianDistWeighted(profDf,filtRaces)   # Calculate the euclidan distance but with weights depending on favorite drivers
+racesEuclidianDistW = racesEuclidianDistW.sort_values(by='TotalDistance').head(n)
+
+print('Recomended races with weighted euclidian distance: \n')
+print(racesEuclidianDistW['name'] + " " + racesEuclidianDistW['date'])
+print('With the distances: \n')
+print(racesEuclidianDistW['TotalDistance'])
+
+print("\n")
+
+racesKNN = calcKNN(profDf,filtRaces)   # Calculate the KNN neighbours
+racesKNN = racesKNN.sort_values(by='TotalDistance').head(n)
+
+print('Recomended races with KNN: \n')
+print(racesKNN['name'] + " " + racesKNN['date'])
+print('With the distances: \n')
+print(racesKNN['TotalDistance'])
