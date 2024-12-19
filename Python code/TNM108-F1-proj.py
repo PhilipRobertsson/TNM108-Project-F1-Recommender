@@ -57,7 +57,24 @@ profile5 ={
 profiles = [profile1,profile2,profile3, profile4,profile5] # Collect profiles to array
 
 # Functions
-def createProfiles(profiles): # Takes the array profiles, containing all profiles
+def printTitle():
+    print("    _________                                                               ")
+    print("   / ____<  /                                                               ")
+    print("  / /_   / /                                                                ")
+    print(" / __/  / /                                                                 ")
+    print("/_/ ___/_/                                                   __             ")
+    print("   / __ \___  _________  ____ ___  ____ ___  ___  ____  ____/ /__  _____    ")
+    print("  / /_/ / _ \/ ___/ __ \/ __ `__ \/ __ `__ \/ _ \/ __ \/ __  / _ \/ ___/    ")
+    print(" / _, _/  __/ /__/ /_/ / / / / / / / / / / /  __/ / / / /_/ /  __/ /        ")
+    print("/_/_|_|\___/\___/\____/_/ /_/ /_/_/ /_/ /_/\___/_/ /_/\__,_/\___/_/         ")
+    print("  / ___/__  _______/ /____  ____ ___                                        ")
+    print("  \__ \/ / / / ___/ __/ _ \/ __ `__ \                                       ")
+    print(" ___/ / /_/ (__  ) /_/  __/ / / / / /                                       ")
+    print("/____/\__, /____/\__/\___/_/ /_/ /_/                                        ")
+    print("     /____/                                                                 ")
+    print("\n")
+    return
+def createProfilesDataFrame(profiles): # Takes the array profiles, containing all profiles
     profileDf = pd.DataFrame()
     indexCounter = 1                # Used in the subsequent for loop
     # Convert profile parameters to relevant indices
@@ -337,8 +354,21 @@ def drawScatterPlot(filtRaces):
 
 
 #------------------------------------Main-------------------------------------------------
+printTitle()
+#input("Press Enter to continue...")
+# Profile creation
+#userInput = ""
+#currentProfile = 1
+#while userInput != "done":
+#    print('Starting creation of profile', currentProfile, '\n')
+#    favDriver = input("Enter your favorite driver: ")
+#    favConst = input("Enter your favorite constructor: ")
+#    favCircuit = input("Enter your favorite circuit: ")
+#    favRace = input("Enter your favorite grand prix, name and year: ")
+#    userInput = "done"
+
 # Following function calls needs to be executed in order
-profDf = createProfiles(profiles)                     # Generate the profiles dataframe
+profDf = createProfilesDataFrame(profiles)    # Generate the profiles dataframe
 filtRaces = filterRaces()                                   # Filter races.cvs and add relevant information
 filtRaces = calcCosineSimularity(filtRaces)      # Calculate the cosine similarity for all races between qualifying and race result
 filtRaces = calcDriverClimb(filtRaces)              # Calculate the climb for all drivers in all races
