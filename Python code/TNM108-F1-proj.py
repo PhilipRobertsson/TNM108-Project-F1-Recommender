@@ -22,7 +22,7 @@ seasons = pd.read_csv('./F1Data/seasons.csv', index_col='year')
 sprint_results = pd.read_csv('./F1Data/sprint_results.csv', index_col='resultId')
 status = pd.read_csv('./F1Data/status.csv', index_col='statusId')
 
-# Profiles
+# Default profiles
 profile1 = {
   'FavDriver': 'Max Verstappen',
   'FavConst' : 'Red Bull',
