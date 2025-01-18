@@ -369,11 +369,17 @@ printTitle()
 
 # Following function calls needs to be executed in order
 profDf = createProfilesDataFrame(profiles)    # Generate the profiles dataframe
-print(profDf)
 filtRaces = filterRaces()                                   # Filter races.cvs and add relevant information
 filtRaces = calcCosineSimularity(filtRaces)      # Calculate the cosine similarity for all races between qualifying and race result
 filtRaces = calcDriverClimb(filtRaces)              # Calculate the climb for all drivers in all races
 profDf = expandProfiles(profDf, filtRaces)      # Add cosine similarity and driver climb from the profiles favorite races
+
+# Some lines to print specific parts of the two dataframes
+#print(profDf[['raceYear','raceName','raceDriverCosim','raceConstrCosim']])
+#print(filtRaces[['year','name','driverCosim','constrCosim']].loc[1042])
+#plt.scatter(profDf['raceConstrCosim'], profDf['raceDriverCosim'],c=profDf.index, cmap='twilight_shifted')
+#plt.show()
+
 #--------------------------------Diffrent predictions----------------------------------------
 # Diffrent predictions are made with diffrent algorithms.
 # Then the diffrent predictions are sorted and shortened to n entries, then printed to the console
