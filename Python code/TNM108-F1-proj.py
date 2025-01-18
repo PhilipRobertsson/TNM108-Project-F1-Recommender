@@ -30,16 +30,16 @@ profile1 = {
   'FavRace'  : 'Belgian Grand Prix 2022'
 }
 profile2 = {
-  'FavDriver': 'Michael Schumacher',
+  'FavDriver': 'Carlos Sainz',
   'FavConst' : 'Ferrari',
-  'FavCircuit' : 'Hockenheimring',
-  'FavRace'  : 'Belgian Grand Prix 1998'
+  'FavCircuit' : 'Circuit de Monaco',
+  'FavRace'  : 'British Grand Prix 2022'
 }
 profile3 = {
-  'FavDriver': 'Fernando Alonso',
-  'FavConst' : 'Renault',
-  'FavCircuit' : 'Circuit de Barcelona-Catalunya',
-  'FavRace'  : 'Malaysian Grand Prix 2004'
+  'FavDriver': 'Lando Norris',
+  'FavConst' : 'McLaren',
+  'FavCircuit' : 'Autodromo Enzo e Dino Ferrari',
+  'FavRace'  : 'Miami Grand Prix 2024'
 }
 profile4 = {
   'FavDriver': 'Lewis Hamilton',
@@ -48,10 +48,10 @@ profile4 = {
   'FavRace'  : 'Turkish Grand Prix 2020'
 }
 profile5 ={
-  'FavDriver': 'Al Pease',
+  'FavDriver': 'Valtteri Bottas',
   'FavConst' : 'Sauber',
-  'FavCircuit' : 'Autódromo José Carlos Pace',
-  'FavRace'  : 'Monaco Grand Prix 1996'
+  'FavCircuit' : 'Albert Park Grand Prix Circuit',
+  'FavRace'  : 'Russian Grand Prix 2017'
 }
 
 profiles = [profile1,profile2,profile3, profile4,profile5] # Collect profiles to array
@@ -369,11 +369,11 @@ printTitle()
 
 # Following function calls needs to be executed in order
 profDf = createProfilesDataFrame(profiles)    # Generate the profiles dataframe
+print(profDf)
 filtRaces = filterRaces()                                   # Filter races.cvs and add relevant information
 filtRaces = calcCosineSimularity(filtRaces)      # Calculate the cosine similarity for all races between qualifying and race result
 filtRaces = calcDriverClimb(filtRaces)              # Calculate the climb for all drivers in all races
 profDf = expandProfiles(profDf, filtRaces)      # Add cosine similarity and driver climb from the profiles favorite races
-
 #--------------------------------Diffrent predictions----------------------------------------
 # Diffrent predictions are made with diffrent algorithms.
 # Then the diffrent predictions are sorted and shortened to n entries, then printed to the console
