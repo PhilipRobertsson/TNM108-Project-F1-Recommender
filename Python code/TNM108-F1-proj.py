@@ -306,12 +306,12 @@ def calcKNN(profDf, raceDf):
                     winnerWeight = race[1].iloc[2]
                     desiredDriver = profile[1].iloc[2] # wanted driver
 
-                    z = 100
+                    z = 0
                     for index, driver in enumerate(winningDrivers):
                         if driver == desiredDriver:
                             if not type(winnerWeight[index]) == float:
                                 driverWeight = winnerWeight[index]
-                                z -= (driverWeight[1]+1) * 10 / (index+1)
+                                z += (driverWeight[1]+1) * 10 / (index+1)
                     total_distance += math.sqrt(pow(x,2) + pow(y,2) + pow(z,2))
             total_distance_vec.append(total_distance)
         else:
